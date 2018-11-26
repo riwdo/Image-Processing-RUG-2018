@@ -1,8 +1,15 @@
 function lab1()
+    assignment1();
+    assignment2();
+end
+
+function assignment1()
     x = imread('ImageProcessing/images/ctskull-256.tif');
+    imshow(IPreduce(x,2));
+end
+
+function assignment2()
     trui = imread('ImageProcessing/images/trui.tif');
-    disp(trui);
-    v2 = IPreduce(x,2);
     s = IPcontraststretch(trui)
     subplot(2,2,1), imshow(trui)
     title("Original image");
