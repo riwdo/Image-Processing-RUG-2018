@@ -1,14 +1,20 @@
 function lab2()
-    img = double(imread('chronometer1250dpi.tif'));
-    mask =[0 1 0; 0 -1 0; 0 0 0];
-    
-    filtered_image = uint8(IPfilter(img, mask));
+    img = double(imread('blurrymoon.tif'));
+    maskX = [-1 0 1; -2 0 2; -1 0 1];
+    maskY = [1 2 1; 0 0 0; -1 -2 -1];
+    filtered_imageX = IPfilter(img, maskX);
+    filtered_imageY = IPfilter(img, maskY);
+    edges = filtered_imageX + filtered_imageY;
     subplot(1,2,1), imshow(uint8(img))
     title("Original image");
-    subplot(1,2,2), imshow(filtered_image)
+    subplot(1,2,2), imshow(edges)
     title("Stretched image");
 end
 
+function filteredvalue = g_new(row,column, mask,image)
+    image_part = image(row-1:row+1,column-1:column+1);
+    filteredvalue = sum(sum(image_part .* mask));
+end
 
 function filteredvalue = g(row,column, mask, image)
     image_part = zeros(3,3);
@@ -35,16 +41,25 @@ function filteredvalue = g(row,column, mask, image)
     else
         image_part = image(row-1:row+1,column-1:column+1);
     end
-    filteredvalue = sum(sum(image_part*mask));
+    filteredvalue = sum(sum(image_part .* mask));
 end
 
+function padded_image = add_padding(img)
+    padded_image = [zeros(1,size(img,2)); img];
+    padded_image = [padded_image; zeros(1,size(padded_image,2))];
+    padded_image = [zeros(size(padded_image,1),1) padded_image zeros(size(padded_image,1),1)];
+end
+
+
 function filtered_image = IPfilter(img, mask)
+    padded_image = add_padding(img);
     filtered_image = zeros(size(img));
-    for row = 1 : size(img,1)-1
-        for column = 1 :size(img,2)-1
-            filtered_image(row,column) = g(row,column, mask, img); 
+    for row = 2 : size(padded_image,1)-2
+        for column = 2 :size(padded_image,2)-2
+            filtered_image(row-1,column-1) = g_new(row,column, mask, padded_image);
         end
     end
+
 end
 
 function gradient_magnitude=IPgradient(img)
