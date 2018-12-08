@@ -1,7 +1,7 @@
 function lab2()
     img = double(imread('blurrymoon.tif'));
     
-    sharpeningfilter = [0 1 0; -1 5 -1; 0 -1 0];
+    sharpeningfilter = [0 -1 0; -1 5 -1; 0 -1 0];
     meanfilter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9];
     maskX = [-1 0 1; -2 0 2; -1 0 1];
     maskY = [1 2 1; 0 0 0; -1 -2 -1];
@@ -11,14 +11,16 @@ function lab2()
     mean_image = IPfilter(img,meanfilter);
     final1 = uint8(IPfilter(mean_image, sharpeningfilter));
     
-    sharp_image = IPfilter(img,sharpeningfilter);
-    final2 = uint8(IPfilter(sharp_image, meanfilter));
-    subplot(1,2,1), imshow(uint8(imsharpen(img)))
-    title("Original image");
-    subplot(1,2,2), imshow(final2)
-    title("Stretched image");
-    %[Gx,Gy] = IPgradient(img);
-    %imshowpair(Gx,Gy,'montage');
+    %sharp_image = IPfilter(img,sharpeningfilter);
+    %final2 = uint8(IPfilter(sharp_image, meanfilter));
+    %subplot(1,2,1), imshow(uint8(final1))
+    %title("Average first");
+    %subplot(1,2,2), imshow(uint8(final2))
+    %title("Sharpen first");
+    %disp(isequal(final1,final2))
+    [Gx,Gy] = (IPgradient(img));
+    imshowpair(Gx,Gy,'montage');
+    title("Gradient X and Gradient Y");
 end
 
 function filteredvalue = g_new(row,column, mask,image)
@@ -42,22 +44,27 @@ function filtered_image = IPfilter(img, mask)
     end
 end
 
-function gradient = secondorderderivativeX(f, row, column)
-    gradient = f(row,column-1)+f(row,column+1) - 2*f(row,column);
+function gradient = secondorderderivativeX(f, column)
+    gradient = f(column-1)+f(column+1) - 2*f(column);
 end
 
-function gradient = secondorderderivativeY(f, row, column)
-    gradient = f(row-1,column)+f(row+1,column) - 2*f(row,column);
+function gradient = secondorderderivativeY(f, row)
+    gradient = f(row-1)+f(row+1) - 2*f(row);
 end
 
 function [gradientY,gradientX] = IPgradient(img)
-    padded_image = add_padding(img);
     gradientX = zeros(size(img));
     gradientY = zeros(size(img));
-    for row=2:size(padded_image,1)-2
-        for column=2:size(padded_image,2)-2
-            gradientX(row-1,column-1) = secondorderderivativeX(padded_image,row,column);
-            gradientY(row-1,column-1) = secondorderderivativeY(padded_image,row,column);
+    for row=1:size(img,1)-1
+        padded_row = [img(row,size(img(row,:),2)) img(row,:) img(row,1)];
+        for column=2:size(padded_row,2)-2
+            gradientX(row,column-1) = secondorderderivativeX(padded_row,column);
+        end
+    end
+    for column=1:size(img,2)-1
+        padded_column = [img(size(img(:,column),1),column); img(:,column); img(1,column)];
+        for row=2:size(padded_column,1)-2
+            gradientY(row-1,column) = secondorderderivativeY(padded_column,row);
         end
     end
 end
