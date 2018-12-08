@@ -1,6 +1,7 @@
 function lab2()
-    img = double(imread('blurrymoon.tif'));
-    
+    %img = double(imread('blurrymoon.tif'));
+    img = double(imread('characters.tif'));
+
     sharpeningfilter = [0 -1 0; -1 5 -1; 0 -1 0];
     meanfilter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9];
     maskX = [-1 0 1; -2 0 2; -1 0 1];
@@ -18,9 +19,11 @@ function lab2()
     %subplot(1,2,2), imshow(uint8(final2))
     %title("Sharpen first");
     %disp(isequal(final1,final2))
-    [Gx,Gy] = (IPgradient(img));
-    imshowpair(Gx,Gy,'montage');
-    title("Gradient X and Gradient Y");
+    %[Gx,Gy] = (IPgradient(img));
+   % imshowpair(Gx,Gy,'montage');
+    %title("Gradient X and Gradient Y");
+    lowpass = IPgaussian(50,size(img,1),size(img,2));
+    imshow(uint8(lowpass.*img));
 end
 
 function filteredvalue = g_new(row,column, mask,image)
@@ -65,6 +68,20 @@ function [gradientY,gradientX] = IPgradient(img)
         padded_column = [img(size(img(:,column),1),column); img(:,column); img(1,column)];
         for row=2:size(padded_column,1)-2
             gradientY(row-1,column) = secondorderderivativeY(padded_column,row);
+        end
+    end
+end
+
+function distance = D(x,y,centerx,centery)
+    distance = floor(sqrt(power(x-centerx,2)+ power(y-centery,2)));
+end
+function H = IPgaussian(D0,M,N)
+    centerx = floor(N/2);
+    centery = floor(M/2);
+    H = zeros(M,N);
+    for y = 1 : M-1
+        for x = 1 : N-1
+            H(y,x) = exp(-power(D(x,y,centerx,centery),2)/(2*D0^2));
         end
     end
 end
