@@ -1,46 +1,28 @@
 function lab2()
     img = double(imread('blurrymoon.tif'));
+    
+    sharpeningfilter = [0 1 0; -1 5 -1; 0 -1 0];
+    meanfilter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9];
     maskX = [-1 0 1; -2 0 2; -1 0 1];
     maskY = [1 2 1; 0 0 0; -1 -2 -1];
     filtered_imageX = IPfilter(img, maskX);
     filtered_imageY = IPfilter(img, maskY);
-    edges = filtered_imageX + filtered_imageY;
-    subplot(1,2,1), imshow(uint8(img))
+    
+    mean_image = IPfilter(img,meanfilter);
+    final1 = uint8(IPfilter(mean_image, sharpeningfilter));
+    
+    sharp_image = IPfilter(img,sharpeningfilter);
+    final2 = uint8(IPfilter(sharp_image, meanfilter));
+    subplot(1,2,1), imshow(uint8(imsharpen(img)))
     title("Original image");
-    subplot(1,2,2), imshow(edges)
+    subplot(1,2,2), imshow(final2)
     title("Stretched image");
+    %[Gx,Gy] = IPgradient(img);
+    %imshowpair(Gx,Gy,'montage');
 end
 
 function filteredvalue = g_new(row,column, mask,image)
     image_part = image(row-1:row+1,column-1:column+1);
-    filteredvalue = sum(sum(image_part .* mask));
-end
-
-function filteredvalue = g(row,column, mask, image)
-    image_part = zeros(3,3);
-    if column-1 == 0
-        if row-1 == 0
-            image_part(2:3,2:3) = image(row:row+1,column:column+1);
-        elseif row+1 == 0
-            image_part(1:2,2:3) = image(row-1:row,column:column+1);
-        else
-            image_part(1:3,2:3) = image(row-1:row+1,column:column+1);
-        end
-    elseif column+1 == size(image,2)+1
-        if row-1 == 0
-            image_part(2:3,1:2) = image(row:row+1,column-1:column);
-        elseif row+1 == 0
-            image_part(1:2,1:2) = image(row-1:row,column-1:column);
-        else
-            image_part(1:3,1:2) = image(row-1:row+1,column-1:column);
-        end
-    elseif row-1 == 0
-        image_part(2:3,1:3) = image(row:row+1, column-1:column+1);
-    elseif row+1 == 0
-        image_part(1:2,1:3) = iamge(row-1:row,column-1:column+1);
-    else
-        image_part = image(row-1:row+1,column-1:column+1);
-    end
     filteredvalue = sum(sum(image_part .* mask));
 end
 
@@ -50,7 +32,6 @@ function padded_image = add_padding(img)
     padded_image = [zeros(size(padded_image,1),1) padded_image zeros(size(padded_image,1),1)];
 end
 
-
 function filtered_image = IPfilter(img, mask)
     padded_image = add_padding(img);
     filtered_image = zeros(size(img));
@@ -59,13 +40,24 @@ function filtered_image = IPfilter(img, mask)
             filtered_image(row-1,column-1) = g_new(row,column, mask, padded_image);
         end
     end
-
 end
 
-function gradient_magnitude=IPgradient(img)
+function gradient = secondorderderivativeX(f, row, column)
+    gradient = f(row,column-1)+f(row,column+1) - 2*f(row,column);
+end
 
- x = imread('blurrymoon.tif');
-    imshow();
+function gradient = secondorderderivativeY(f, row, column)
+    gradient = f(row-1,column)+f(row+1,column) - 2*f(row,column);
+end
 
-
+function [gradientY,gradientX] = IPgradient(img)
+    padded_image = add_padding(img);
+    gradientX = zeros(size(img));
+    gradientY = zeros(size(img));
+    for row=2:size(padded_image,1)-2
+        for column=2:size(padded_image,2)-2
+            gradientX(row-1,column-1) = secondorderderivativeX(padded_image,row,column);
+            gradientY(row-1,column-1) = secondorderderivativeY(padded_image,row,column);
+        end
+    end
 end
