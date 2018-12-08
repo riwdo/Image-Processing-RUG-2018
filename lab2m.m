@@ -2,15 +2,15 @@ function lab2()
     %img = double(imread('blurrymoon.tif'));
     img = double(imread('characters.tif'));
 
-    sharpeningfilter = [0 -1 0; -1 5 -1; 0 -1 0];
-    meanfilter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9];
-    maskX = [-1 0 1; -2 0 2; -1 0 1];
-    maskY = [1 2 1; 0 0 0; -1 -2 -1];
-    filtered_imageX = IPfilter(img, maskX);
-    filtered_imageY = IPfilter(img, maskY);
+    %sharpeningfilter = [0 -1 0; -1 5 -1; 0 -1 0];
+    %meanfilter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9];
+   % maskX = [-1 0 1; -2 0 2; -1 0 1];
+    %maskY = [1 2 1; 0 0 0; -1 -2 -1];
+    %filtered_imageX = IPfilter(img, maskX);
+   % filtered_imageY = IPfilter(img, maskY);
     
-    mean_image = IPfilter(img,meanfilter);
-    final1 = uint8(IPfilter(mean_image, sharpeningfilter));
+    %mean_image = IPfilter(img,meanfilter);
+   % final1 = uint8(IPfilter(mean_image, sharpeningfilter));
     
     %sharp_image = IPfilter(img,sharpeningfilter);
     %final2 = uint8(IPfilter(sharp_image, meanfilter));
@@ -22,8 +22,17 @@ function lab2()
     %[Gx,Gy] = (IPgradient(img));
    % imshowpair(Gx,Gy,'montage');
     %title("Gradient X and Gradient Y");
-    lowpass = IPgaussian(50,size(img,1),size(img,2));
-    imshow(uint8(lowpass.*img));
+    %lowpass = IPgaussian(50,size(doubleimg,1),size(img,2));
+    
+    %Apply fourier transform and shift to correct center
+    df = fftshift(fft2(img));
+    lp = IPgaussian(10,size(img,1),size(img,2));
+    %Remove complex part
+    ifftresult = abs(ifft2(lp .* df)); 
+    %Normalize
+    ifftresult = ifftresult / max(ifftresult(:)); 
+    %Scale back up and convert to uint8
+    imshow(uint8(ifftresult .*255)); 
 end
 
 function filteredvalue = g_new(row,column, mask,image)
@@ -72,6 +81,14 @@ function [gradientY,gradientX] = IPgradient(img)
     end
 end
 
+function img = f_p(img)
+    for row=1:size(img,1)
+        for column=1:size(img,2)
+            img(row,column) = power(-1,row+column);
+        end
+    end
+end
+
 function distance = D(x,y,centerx,centery)
     distance = floor(sqrt(power(x-centerx,2)+ power(y-centery,2)));
 end
@@ -81,7 +98,7 @@ function H = IPgaussian(D0,M,N)
     H = zeros(M,N);
     for y = 1 : M-1
         for x = 1 : N-1
-            H(y,x) = exp(-power(D(x,y,centerx,centery),2)/(2*D0^2));
+            H(y,x) = exp(-power(D(x,y,centerx,centery),2)/(2*power(D0,2)));
         end
     end
 end
