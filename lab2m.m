@@ -20,19 +20,11 @@ function lab2()
     %title("Sharpen first");
     %disp(isequal(final1,final2))
     %[Gx,Gy] = (IPgradient(img));
-   % imshowpair(Gx,Gy,'montage');
+    %imshowpair(Gx,Gy,'montage');
     %title("Gradient X and Gradient Y");
     %lowpass = IPgaussian(50,size(doubleimg,1),size(img,2));
-    
-    %Apply fourier transform and shift to correct center
-    df = fftshift(fft2(img));
-    lp = IPgaussian(10,size(img,1),size(img,2));
-    %Remove complex part
-    ifftresult = abs(ifft2(lp .* df)); 
-    %Normalize
-    ifftresult = ifftresult / max(ifftresult(:)); 
-    %Scale back up and convert to uint8
-    imshow(uint8(ifftresult .*255)); 
+  
+    IPftfilter(img,@IPgaussian);
 end
 
 function filteredvalue = g_new(row,column, mask,image)
@@ -91,6 +83,17 @@ end
 
 function distance = D(x,y,centerx,centery)
     distance = floor(sqrt(power(x-centerx,2)+ power(y-centery,2)));
+end
+
+function IPftfilter(x,H)
+    df = fftshift(fft2(x));
+    lp = H(10,size(x,1),size(x,2));
+    %Remove complex part
+    ifftresult = abs(ifft2(lp .* df)); 
+    %Normalize
+    ifftresult = ifftresult / max(ifftresult(:)); 
+    %Scale back up and convert to uint8
+    imshow(uint8(ifftresult .*255)); 
 end
 function H = IPgaussian(D0,M,N)
     centerx = floor(N/2);
