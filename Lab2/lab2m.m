@@ -1,30 +1,26 @@
 function lab2()
-    %img = double(imread('blurrymoon.tif'));
-    img = double(imread('characters.tif'));
+    blurrymoon = double(imread('blurrymoon.tif'));
+    characters = double(imread('characters.tif'));
 
-    %sharpeningfilter = [0 -1 0; -1 5 -1; 0 -1 0];
-    %meanfilter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9];
-   % maskX = [-1 0 1; -2 0 2; -1 0 1];
-    %maskY = [1 2 1; 0 0 0; -1 -2 -1];
-    %filtered_imageX = IPfilter(img, maskX);
-   % filtered_imageY = IPfilter(img, maskY);
+    sharpeningfilter = [0 -1 0; -1 5 -1; 0 -1 0];
+    meanfilter = [1/9 1/9 1/9; 1/9 1/9 1/9; 1/9 1/9 1/9];
     
-    %mean_image = IPfilter(img,meanfilter);
-   % final1 = uint8(IPfilter(mean_image, sharpeningfilter));
+    mean_image = IPfilter(blurrymoon,meanfilter);
+    final1 = uint8(IPfilter(mean_image, sharpeningfilter));
     
-    %sharp_image = IPfilter(img,sharpeningfilter);
-    %final2 = uint8(IPfilter(sharp_image, meanfilter));
-    %subplot(1,2,1), imshow(uint8(final1))
-    %title("Average first");
-    %subplot(1,2,2), imshow(uint8(final2))
-    %title("Sharpen first");
-    %disp(isequal(final1,final2))
-    %[Gx,Gy] = (IPgradient(img));
-    %imshowpair(Gx,Gy,'montage');
-    %title("Gradient X and Gradient Y");
-    %lowpass = IPgaussian(50,size(doubleimg,1),size(img,2));
-  
-    IPftfilter(img,@IPgaussian);
+    sharp_image = IPfilter(blurrymoon,sharpeningfilter);
+    final2 = uint8(IPfilter(sharp_image, meanfilter));
+    subplot(2,2,1), imshow(uint8(final1))
+    title("Average first");
+    subplot(2,2,2), imshow(uint8(final2))
+    title("Sharpen first");
+    
+    [Gx,Gy] = (IPgradient(blurrymoon));
+    subplot(2,2,3), imshowpair(Gx,Gy,'montage');
+    title("Gradient X and Gradient Y");
+    
+    subplot(2,2,4), imshow(uint8(characters));
+    %IPftfilter(characters,@IPgaussian);
 end
 
 function filteredvalue = g_new(row,column, mask,image)
@@ -73,21 +69,13 @@ function [gradientY,gradientX] = IPgradient(img)
     end
 end
 
-function img = f_p(img)
-    for row=1:size(img,1)
-        for column=1:size(img,2)
-            img(row,column) = power(-1,row+column);
-        end
-    end
-end
-
 function distance = D(x,y,centerx,centery)
     distance = floor(sqrt(power(x-centerx,2)+ power(y-centery,2)));
 end
 
 function IPftfilter(x,H)
     df = fftshift(fft2(x));
-    lp = H(10,size(x,1),size(x,2));
+    lp = H(200,size(x,1),size(x,2));
     %Remove complex part
     ifftresult = abs(ifft2(lp .* df)); 
     %Normalize
@@ -95,6 +83,7 @@ function IPftfilter(x,H)
     %Scale back up and convert to uint8
     imshow(uint8(ifftresult .*255)); 
 end
+
 function H = IPgaussian(D0,M,N)
     centerx = floor(N/2);
     centery = floor(M/2);
